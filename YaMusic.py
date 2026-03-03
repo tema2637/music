@@ -639,19 +639,35 @@ class YaMusicMod(loader.Module):
             plist = queue.get("playable_list", [])
             idx = queue.get("current_playable_index", -1)
             cur_track = plist[idx] if 0 <= idx < len(plist) else None
+            version = status.get("version", {})
+            devices = ynison.get("devices", [])
+            active_dev = ynison.get("active_device_id_optional", "")
 
-            lines.append("<b>── Ynison ──</b>")
+            lines.append("<b>── Ynison status ──</b>")
             lines.append(f"progress_ms: <code>{status.get('progress_ms')}</code>")
             lines.append(f"duration_ms: <code>{status.get('duration_ms')}</code>")
             lines.append(f"paused: <code>{status.get('paused')}</code>")
-            lines.append(f"playable_list len: <code>{len(plist)}</code>")
-            lines.append(f"current_index: <code>{idx}</code>")
+            lines.append(f"timestamp_ms: <code>{version.get('timestamp_ms')}</code>")
+            lines.append(f"device_id: <code>{version.get('device_id')}</code>")
+            lines.append(f"active_device: <code>{active_dev}</code>")
+
+            lines.append("\n<b>── Ynison queue ──</b>")
+            lines.append(f"list len: <code>{len(plist)}</code>")
+            lines.append(f"index: <code>{idx}</code>")
             if cur_track:
                 lines.append(
                     f"playable_id: <code>{cur_track.get('playable_id')}</code>"
                 )
                 lines.append(
-                    f"playable_type: <code>{cur_track.get('playable_type')}</code>"
+                    f"type: <code>{cur_track.get('playable_type')}</code>"
+                )
+
+            lines.append(f"\n<b>── Devices ({len(devices)}) ──</b>")
+            for d in devices:
+                di = d.get("info", {})
+                lines.append(
+                    f"• <code>{di.get('device_id', '?')[:12]}</code> "
+                    f"| {di.get('title', '?')} | shadow={d.get('is_shadow')}"
                 )
         except Exception as e:
             lines.append(f"<b>Ynison error:</b> <code>{e}</code>")
@@ -662,18 +678,20 @@ class YaMusicMod(loader.Module):
             if api and "track" in api:
                 t = api["track"]
                 lines.append("\n<b>── HTTP API ──</b>")
-                lines.append(f"progress_ms: <code>{api.get('progress_ms')}</code>")
-                lines.append(f"duration: <code>{t.get('duration')}</code>")
-                lines.append(f"title: <code>{t.get('title')}</code>")
-                lines.append(f"artist: <code>{t.get('artist')}</code>")
-                lines.append(f"track_id: <code>{t.get('track_id')}</code>")
-                lines.append(
-                    f"download_link: <code>"
-                    f"{'yes' if t.get('download_link') else 'no'}</code>"
-                )
-                lines.append(f"img: <code>{'yes' if t.get('img') else 'no'}</code>")
+                # Show all top-level keys
+                api_keys = [k for k in api.keys() if k != "track"]
+                for k in api_keys:
+                    v = api[k]
+                    lines.append(f"{k}: <code>{v}</code>")
+                lines.append(f"\n<b>── HTTP API track ──</b>")
+                for k, v in t.items():
+                    if k in ("download_link", "img"):
+                        lines.append(f"{k}: <code>{'yes' if v else 'no'}</code>")
+                    else:
+                        lines.append(f"{k}: <code>{v}</code>")
             else:
-                lines.append("\n<b>HTTP API:</b> no track data")
+                api_text = str(api)[:500] if api else "None"
+                lines.append(f"\n<b>HTTP API:</b> no track data\n<code>{api_text}</code>")
         except Exception as e:
             lines.append(f"\n<b>API error:</b> <code>{e}</code>")
 
