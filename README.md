@@ -13,7 +13,7 @@ Yandex Music module for [Hikka](https://github.com/hikariatama/Hikka) userbot.
 ## Install
 
 ```
-.dlmod https://raw.githubusercontent.com/dsware/music/main/YaMusic.py
+.dlmod https://raw.githubusercontent.com/tema2637/music/refs/heads/main/YaMusic.py
 ```
 
 Then configure token: `.cfg YaMusic`
